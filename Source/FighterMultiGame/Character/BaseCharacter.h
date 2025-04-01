@@ -6,24 +6,36 @@
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
-UCLASS()
+UCLASS(Abstract)
 class FIGHTERMULTIGAME_API ABaseCharacter : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ABaseCharacter();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
-	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void BaseAttack() PURE_VIRTUAL(ABaseCharacter::BaseAttack);
+	virtual void SpecialAttack() PURE_VIRTUAL(ABaseCharacter::SpecialAttack);
 
+	virtual void Move() PURE_VIRTUAL(ABaseCharacter::Move);
+	virtual void Jump() PURE_VIRTUAL(ABaseCharacter::Jump);
+
+	//void GetItem();
+	virtual void Damaged() PURE_VIRTUAL(ABaseCharacter::Damaged);
+	virtual void Die() PURE_VIRTUAL(ABaseCharacter::Die);
+	
+private:
+	int32 Hp;
+	int32 Power;
+
+	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
+	float SpecialAtkCool;
+	float SpecialAtkCurrCool;
 };
