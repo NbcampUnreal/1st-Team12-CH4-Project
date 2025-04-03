@@ -11,6 +11,7 @@ ABaseCharacter::ABaseCharacter()
 	PrimaryActorTick.bCanEverTick = true;
 
 	bReplicates = true;
+	bTrackCam = true;
 }
 
 // Called when the game starts or when spawned
