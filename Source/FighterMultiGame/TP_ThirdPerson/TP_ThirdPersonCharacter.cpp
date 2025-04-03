@@ -276,6 +276,6 @@ void ATP_ThirdPersonCharacter::Move(const FInputActionValue& Value)
 
 	if (Controller != nullptr)
 	{
-		AddMovementInput(FVector::RightVector, MovementVector.X);
+		AddMovementInput(FVector::LeftVector, MovementVector.X);
 	}
 }
