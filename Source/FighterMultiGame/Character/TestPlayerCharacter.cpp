@@ -44,7 +44,7 @@ void ATestPlayerCharacter::BeginPlay()
 	CheckNetwork();
 
 	FTimerHandle CameraTimerHandle;
-	GetWorldTimerManager().SetTimer(CameraTimerHandle, this, &ATestPlayerCharacter::FixCamera, 0.5f, false);
+	//GetWorldTimerManager().SetTimer(CameraTimerHandle, this, &ATestPlayerCharacter::FixCamera, 0.5f, false);
 
 	GetWorldTimerManager().SetTimer(TestAttackTimerHandle, this, &ATestPlayerCharacter::ExecuteAttack, 1.0f, true);
 }
@@ -167,7 +167,7 @@ void ATestPlayerCharacter::CheckNetwork()
 void ATestPlayerCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
-	FixCamera();
+	//FixCamera();
 }
 
 void ATestPlayerCharacter::FixCamera()
@@ -191,7 +191,7 @@ void ATestPlayerCharacter::OnRep_Controller()
 {
 	Super::OnRep_Controller();
 	FTimerHandle DelayFixCameraHandle;
-	GetWorld()->GetTimerManager().SetTimer(DelayFixCameraHandle, this, &ATestPlayerCharacter::FixCamera, 0.5f, false);
+	//GetWorld()->GetTimerManager().SetTimer(DelayFixCameraHandle, this, &ATestPlayerCharacter::FixCamera, 0.5f, false);
 }
 
 //
