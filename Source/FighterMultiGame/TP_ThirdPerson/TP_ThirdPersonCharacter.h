@@ -44,6 +44,8 @@ class ATP_ThirdPersonCharacter : public ABaseCharacter, public IDamageableInterf
 public:
 	ATP_ThirdPersonCharacter();
 
+	virtual void BeginPlay() override;
+
 protected:
 
 	/** Called for movement input */
@@ -63,8 +65,77 @@ public:
 	virtual void ApplyKnockback(FVector Direction, float Force) override;
 
 	virtual void ExecuteAttack() override;
-	virtual void CheckCombo() override;
+	virtual void AddCombo() override;
 	virtual void ApplyHitbox() override;
+
+
+protected:
+	UFUNCTION(Server, Reliable)
+	void Server_ApplyDamage(AActor* Damager, float DamageAmount);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayKnockback(FVector KnockDirection, float Force);
+
+	UFUNCTION(Server, Reliable)
+	void Server_RequestAttack();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayAttackAnim();
+
+    
+
 	
+	
+	UFUNCTION()
+	void OnHitBoxOverlapBegin(UPrimitiveComponent* OverlappedComponent,
+							  AActor* OtherActor,
+							  UPrimitiveComponent* OtherComp,
+							  int32 OtherBodyIndex,
+							  bool bFromSweep,
+							  const FHitResult& SweepResult);
+    
+	void ResetCombo();
+
+	virtual void PossessedBy(AController* NewController) override;
+
+void ResetKnockback();
+	virtual void Landed(const FHitResult& Hit) override;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Combat")
+	UAnimMontage* AttackMontage;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	class UBoxComponent* PlayerHitBox;
+    
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Combat")
+	float BaseAttackDamage = 10.0f;
+
+	UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Combat")
+	float KnockbackMultiplier = 1000.0f;
+
+	float CurrentHP = 100.0f;
+	float MaxHP = 100.0f;
+    
+	float Speed = 500.0f;
+
+	TSet<AActor*> HitActors;
+	float MaxKnockbackGauge = 100.f;
+	float CurrKnockbackGauge = 0.f;
+
+	bool bIsKnockback = false;
+
+	bool bIsCombo = false;
+	int32 ComboCount = 0;
+
 };
 
+inline void ATP_ThirdPersonCharacter::ResetKnockback()
+{
+	bIsKnockback = false;
+}
+
+inline void ATP_ThirdPersonCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+	bIsKnockback = false;
+}

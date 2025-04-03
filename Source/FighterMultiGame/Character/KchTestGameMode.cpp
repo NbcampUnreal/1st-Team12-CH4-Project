@@ -35,6 +35,5 @@ AActor* AKchTestGameMode::ChoosePlayerStart_Implementation(AController* Player)
 		}
 	}
 
-	// 기본 PlayerStart 사용
 	return Super::ChoosePlayerStart_Implementation(Player);
 }
