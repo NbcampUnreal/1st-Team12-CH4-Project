@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "FighterMultiGame.h"
 #include "TP_ThirdPerson.h"
+#include "FighterMultiGame.h"
 #include "Modules/ModuleManager.h"
 
 //IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, TP_ThirdPerson, "TP_ThirdPerson" );
