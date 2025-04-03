@@ -4,11 +4,12 @@
 #include "Character/TestPlayerCharacter.h"
 #include "Net/UnrealNetwork.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
 #include "DrawDebugHelpers.h"
-
-
-
+#include "Components/BoxComponent.h"
+#include "GameFramework/Actor.h"
+#include "Camera/CameraActor.h"
 
 
 ATestPlayerCharacter::ATestPlayerCharacter()
@@ -23,8 +24,37 @@ void ATestPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	for (UActorComponent* Comp : GetComponents())
+	{
+		if (UBoxComponent* Box = Cast<UBoxComponent>(Comp))
+		{
+			if (Box->GetName() == TEXT("HitBox"))
+			{
+				PlayerHitBox = Box;
+				break;
+			}
+		}
+	}
+	if (PlayerHitBox)
+	{
+		PlayerHitBox->OnComponentBeginOverlap.AddDynamic(this, &ATestPlayerCharacter::OnHitBoxOverlapBegin);
+		PlayerHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 기본 비활성화
+	}
+	
 	CheckNetwork();
+
+	FTimerHandle CameraTimerHandle;
+	GetWorldTimerManager().SetTimer(CameraTimerHandle, this, &ATestPlayerCharacter::FixCamera, 0.5f, false);
+
 	GetWorldTimerManager().SetTimer(TestAttackTimerHandle, this, &ATestPlayerCharacter::ExecuteAttack, 1.0f, true);
+}
+
+void ATestPlayerCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	FTimerHandle DelayFixCameraHandle;
+	GetWorld()->GetTimerManager().SetTimer(DelayFixCameraHandle, this, &ATestPlayerCharacter::FixCamera, 0.5f, false);
+
 }
 
 void ATestPlayerCharacter::CheckNetwork()
@@ -144,36 +174,61 @@ void ATestPlayerCharacter::ResetCombo()
 	bIsCombo = false;
 }
 
+void ATestPlayerCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	FixCamera();
+}
+
+void ATestPlayerCharacter::FixCamera()
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (PC && PC->IsLocalController()) 
+	{
+		TArray<AActor*> FoundCameras;
+		UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACameraActor::StaticClass(), FoundCameras);
+
+		if (FoundCameras.Num() > 0)
+		{
+			PC->SetViewTargetWithBlend(FoundCameras[0], 0.5f);
+			UE_LOG(LogTemp, Log, TEXT("고정 카메라로 변경 완료"));
+		}
+	}
+
+}
+
 //히트박스 , 피격판정 함수
 void ATestPlayerCharacter::ApplyHitbox()
 {
-	FVector Start = GetActorLocation() + GetActorForwardVector() * 100.f;
-	FVector End = Start + GetActorForwardVector() * 150.f;
+	if (!PlayerHitBox) return;
 
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
+	PlayerHitBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
-	FHitResult Hit;
-	bool bHit = GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Pawn, Params);
-
-	if (bHit && Hit.GetActor())
+	FTimerHandle DisableHandle;
+	GetWorldTimerManager().SetTimer(DisableHandle, [this]()
 	{
-		AActor* HitActor = Hit.GetActor();
-
-		if (HitActor->ActorHasTag("Enemy"))
+		if (PlayerHitBox)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[테스트 공격] Enemy 적중: %s"), *HitActor->GetName());
+			PlayerHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
-		else
+	}, 0.2f, false);
+}
+
+void ATestPlayerCharacter::OnHitBoxOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (OtherActor && OtherActor != this)
+	{
+		if (OtherActor->ActorHasTag("Enemy")) 
 		{
-			UE_LOG(LogTemp, Log, TEXT("[테스트 공격] 적이 아님: %s"), *HitActor->GetName());
+			UE_LOG(LogTemp, Warning, TEXT("히트받스에Enemy 적중: %s"), *OtherActor->GetName());
 		}
 
-		if (IDamageableInterface* Target = Cast<IDamageableInterface>(HitActor))
+		if (IDamageableInterface* Target = Cast<IDamageableInterface>(OtherActor))
 		{
 			Target->ApplyDamage(this, BaseAttackDamage);
 
-			FVector KnockDir = HitActor->GetActorLocation() - GetActorLocation();
+			FVector KnockDir = OtherActor->GetActorLocation() - GetActorLocation();
 			KnockDir.Normalize();
 
 			float KnockForce = BaseAttackDamage * KnockbackMultiplier * 0.01f;
@@ -181,11 +236,103 @@ void ATestPlayerCharacter::ApplyHitbox()
 			Target->ApplyKnockback(KnockDir, KnockForce);
 		}
 	}
-
-	//테스트용
-#if WITH_EDITOR
-	DrawDebugLine(GetWorld(), Start, End, FColor::Yellow, false, 1.0f, 0, 2.0f);
-#endif
 }
 
 
+void ATestPlayerCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+	if (UEnhancedInputComponent* EnhancedInput = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+	{
+		if (AFMGPlayerController* PlayerController = Cast<AFMGPlayerController>(GetController()))
+		{
+			if (PlayerController->MoveActionInput)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->MoveActionInput,
+					ETriggerEvent::Triggered,
+					this,
+					&ATestPlayerCharacter::Move
+				);
+			}
+            
+			if (PlayerController->JumpActionInput)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->JumpActionInput,
+					ETriggerEvent::Triggered,
+					this,
+					&ATestPlayerCharacter::StartJump
+				);
+                
+				EnhancedInput->BindAction(
+					PlayerController->JumpActionInput,
+					ETriggerEvent::Completed,
+					this,
+					&ATestPlayerCharacter::StopJump
+				);
+			}
+			if (PlayerController->BasicAttackInput)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->BasicAttackInput,
+					ETriggerEvent::Started,
+					this,
+					&ATestPlayerCharacter::BasicAttack
+				);
+			}
+			if (PlayerController->SpecialAttackInput)
+			{
+				EnhancedInput->BindAction(
+					PlayerController->SpecialAttackInput,
+					ETriggerEvent::Started,
+					this,
+					&ATestPlayerCharacter::SpecialAttack
+				);
+			}
+		}
+	}
+}
+
+void ATestPlayerCharacter::Move(const FInputActionValue& value)
+{
+	const float InputAxis = value.Get<float>();
+
+	if (Controller && InputAxis != 0.0f)
+	{
+		AddMovementInput(FVector::YAxisVector, InputAxis); 
+
+		
+		const float TargetYaw = (InputAxis > 0.f) ? 90.f : -90.f;
+		SetActorRotation(FRotator(0.f, TargetYaw, 0.f));
+	}
+}
+
+void ATestPlayerCharacter::StartJump(const FInputActionValue& value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("점프 키 입력"));
+	Jump();
+}
+
+void ATestPlayerCharacter::StopJump(const FInputActionValue& value)
+{
+	StopJumping();
+}
+
+void ATestPlayerCharacter::BasicAttack(const FInputActionValue& value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("일반공격 키 입력"));
+	if (!HasAuthority())
+	{
+		Server_RequestAttack();
+		return;
+	}
+
+	ExecuteAttack();
+}
+
+void ATestPlayerCharacter::SpecialAttack(const FInputActionValue& value)
+{
+	UE_LOG(LogTemp, Warning, TEXT("특수공격 키 입력"));
+
+}
