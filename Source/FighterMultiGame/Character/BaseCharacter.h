@@ -27,4 +27,8 @@ private:
 	UPROPERTY(EditAnywhere, meta=(AllowPrivateAccess=true))
 	float SpecialAtkCool;
 	float SpecialAtkCurrCool;
+
+public:
+	UPROPERTY(Replicated, BlueprintReadWrite)
+	bool bTrackCam;
 };

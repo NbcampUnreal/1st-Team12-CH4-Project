@@ -2,6 +2,7 @@
 
 
 #include "Character/BaseCharacter.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 ABaseCharacter::ABaseCharacter()
@@ -9,6 +10,7 @@ ABaseCharacter::ABaseCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
@@ -32,3 +34,9 @@ void ABaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 }
 
+
+void ABaseCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const 
+{ 	
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps); 
+	DOREPLIFETIME(ABaseCharacter, bTrackCam);
+}
