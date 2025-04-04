@@ -1,64 +1,49 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Character/BaseCharacter.h"
-#include "Character/ICombatInterface.h"
-#include "Character/IDamageableInterface.h"
+#include "Components/BoxComponent.h"
+
+#include "TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 #include "TestPlayerCharacter.generated.h"
 
+
+class UCameraComponent;
+struct FInputActionValue;
+
+
 UCLASS()
-class FIGHTERMULTIGAME_API ATestPlayerCharacter : public ABaseCharacter, public IDamageableInterface, public ICombatInterface
+class FIGHTERMULTIGAME_API ATestPlayerCharacter : public ATP_ThirdPersonCharacter
 {
     GENERATED_BODY()
 
 public:
     ATestPlayerCharacter();
 
-    virtual void ApplyDamage(AActor* Damager, float DamageAmount) override;
-    virtual void ApplyKnockback(FVector Direction, float Force) override;
 
-    virtual void ExecuteAttack() override;
-    virtual void CheckCombo() override;
-    virtual void ApplyHitbox() override;
-
-    void ResetCombo();
-
+    virtual void PossessedBy(AController* NewController) override;
+    void FixCamera();
+    
+    virtual void OnRep_Controller() override;
 protected:
     virtual void BeginPlay() override;
 
-    UFUNCTION(Server, Reliable)
-    void Server_ApplyDamage(AActor* Damager, float DamageAmount);
+    
 
-    UFUNCTION(NetMulticast, Reliable)
-    void Multicast_PlayKnockback(FVector KnockDirection, float Force);
+    //
+    //
+    // protected:
+    // virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    // UFUNCTION()
+    // void Move(const FInputActionValue& value);
+    // UFUNCTION()
+    // void StartJump(const FInputActionValue& value);
+    // UFUNCTION()
+    // void StopJump(const FInputActionValue& value);
+    // UFUNCTION()
+    // void BasicAttack(const FInputActionValue& value);
+    // UFUNCTION()
+    // void SpecialAttack(const FInputActionValue& value);
 
-    UFUNCTION(Server, Reliable)
-    void Server_RequestAttack();
-
-    UFUNCTION(NetMulticast, Reliable)
-    void Multicast_PlayAttackAnim();
-
-
-    UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Combat")
-    UAnimMontage* AttackMontage;
-
-    UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Combat")
-    float BaseAttackDamage = 10.0f;
-
-    UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Combat")
-    float KnockbackMultiplier = 1000.0f;
-
-    UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Combat")
-    TSubclassOf<UDamageType> DamageTypeClass;
-
-    float CurrentHP = 100.0f;
-    float MaxHP = 100.0f;
-
-    float MaxKnockbackGauge = 100.f;
-    float CurrKnockbackGauge = 0.f;
-
-    bool bIsCombo = false;
-    int32 ComboCount = 0;
 
     UPROPERTY(EditAnywhere,BlueprintReadWrite, Category = "Combat")
     float ComboResetTime = 1.0f;
@@ -73,4 +58,7 @@ protected:
     void CheckNetwork();
 
     
+
+    
 };
+

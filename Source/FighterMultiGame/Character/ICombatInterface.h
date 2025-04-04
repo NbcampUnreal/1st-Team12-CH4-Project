@@ -16,7 +16,7 @@ class FIGHTERMULTIGAME_API ICombatInterface
 	GENERATED_BODY()
 public:
 	virtual void ExecuteAttack() = 0;
-	virtual void CheckCombo() = 0;
+	virtual void AddCombo() = 0;
 	virtual void ApplyHitbox() = 0;
 
 };
