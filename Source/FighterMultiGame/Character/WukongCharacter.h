@@ -13,5 +13,11 @@ UCLASS()
 class FIGHTERMULTIGAME_API AWukongCharacter : public ATP_ThirdPersonCharacter
 {
 	GENERATED_BODY()
-	
+
+public:
+	UFUNCTION(BlueprintCallable)
+	void OnSpecialAttack(AActor* OtherActor);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	float SpecialAttackDamage = 15.0f;
 };
