@@ -106,7 +106,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	float KnockbackMultiplier = 1000.0f;
-	UPROPERTY(BlueprintReadOnly)
+	UPROPERTY(BlueprintReadOnly, Replicated)
 	float CurrentHP = 100.0f;
 	float MaxHP = 100.0f;
 
