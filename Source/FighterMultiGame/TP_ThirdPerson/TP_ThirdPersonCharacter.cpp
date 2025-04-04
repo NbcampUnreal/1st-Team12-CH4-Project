@@ -7,7 +7,7 @@
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-
+#include "Net/UnrealNetwork.h"
 #include "Components/BoxComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
@@ -121,6 +121,10 @@ void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(UInputComponent* Player
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATP_ThirdPersonCharacter::Move);
+
+		/*// Attack
+		EnhancedInputComponent->BindAction(BasicAttackAction, ETriggerEvent::Triggered, this, &ATP_ThirdPersonCharacter::ExecuteAttack);
+		EnhancedInputComponent->BindAction(SpecialAttackAction, ETriggerEvent::Triggered, this, &ATP_ThirdPersonCharacter::ExecuteAttack);*/
 	}
 	else
 	{
@@ -278,4 +282,10 @@ void ATP_ThirdPersonCharacter::Move(const FInputActionValue& Value)
 	{
 		AddMovementInput(FVector::LeftVector, MovementVector.X);
 	}
+}
+
+void ATP_ThirdPersonCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const 
+{ 	
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps); 
+	DOREPLIFETIME(ATP_ThirdPersonCharacter, CurrentHP);
 }
