@@ -14,10 +14,11 @@
 
 ATestPlayerCharacter::ATestPlayerCharacter()
 {
-	CurrentHP = MaxHP = 100.0f;
 	BaseAttackDamage = 10.0f;
 	KnockbackMultiplier = 1000.0f;
 	ComboResetTime = 1.0f;
+	
+	bTrackCam = true;
 }
 
 void ATestPlayerCharacter::BeginPlay()
