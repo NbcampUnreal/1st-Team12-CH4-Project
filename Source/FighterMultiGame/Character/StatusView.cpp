@@ -5,11 +5,14 @@
 #include "FMG_PlayerState.h"
 
 #include "GameFramework/GameStateBase.h"
+#include "Kismet/GameplayStatics.h"
 
 void UStatusView::NativeConstruct()
 {
 	Super::NativeConstruct();
 	FTimerHandle DelayHandle;
+
+
 	GetWorld()->GetTimerManager().SetTimer(DelayHandle, this, &UStatusView::RefreshPlayerList, 0.8f, false);
 	for (APlayerState* State : GetWorld()->GetGameState()->PlayerArray)
 	{
@@ -25,18 +28,33 @@ void UStatusView::NativeConstruct()
 
 void UStatusView::OnPlayerIndexChangedHandler(AFMG_PlayerState* ChangedState)
 {
+	UE_LOG(LogTemp, Warning, TEXT("리프래쉬 적용") );
+	
 	RefreshPlayerList();
 }
 
 void UStatusView::RefreshPlayerList()
 {
-	TArray<APlayerState*> PlayerStates = GetWorld()->GetGameState()->PlayerArray;
+	TArray<AActor*> AllCharacters;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ABaseCharacter::StaticClass(), AllCharacters);
 
-	for (APlayerState* State : PlayerStates)
+	for (AActor* Actor : AllCharacters)
 	{
-		if (AFMG_PlayerState* FMGState = Cast<AFMG_PlayerState>(State))
+		if (ABaseCharacter* Character = Cast<ABaseCharacter>(Actor))
 		{
-			int32 Index = FMGState->PlayerIndex;
+			int32 Index = -1;
+
+			AFMG_PlayerState* FMGState = Cast<AFMG_PlayerState>(Character->GetPlayerState());
+			if (FMGState)
+			{
+				Index = FMGState->PlayerIndex;
+			}
+			else
+			{
+				static int32 AICount = 2;
+				Index = AICount++;
+			}
+
 			if (Index < 0 || Index > 3) continue;
 
 			UPlayerStatus* StatusWidget = nullptr;
@@ -51,7 +69,13 @@ void UStatusView::RefreshPlayerList()
 
 			if (StatusWidget)
 			{
-				StatusWidget->SetPlayerInfo(FMGState);
+				StatusWidget->SetPlayerInfo(Character);
+
+				if (!FMGState->OnHPChanged.IsAlreadyBound(StatusWidget, &UPlayerStatus::UpdateHP))
+				{
+					FMGState->OnHPChanged.AddDynamic(StatusWidget, &UPlayerStatus::UpdateHP);
+				}
+				StatusWidget->UpdateHP(FMGState->GetHP());
 			}
 		}
 	}

@@ -77,36 +77,20 @@ ATP_ThirdPersonCharacter::ATP_ThirdPersonCharacter()
 void ATP_ThirdPersonCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	for (UActorComponent* Comp : GetComponents())
+	
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
-		if (UBoxComponent* Box = Cast<UBoxComponent>(Comp))
+		if (PC->IsLocalController()) 
 		{
-			if (Box->GetName() == TEXT("HitBox"))
+			StatusViewRef = CreateWidget<UStatusView>(PC, StatusViewClass);
+			if (StatusViewRef)
 			{
-				PlayerHitBox = Box;
-				break;
-			}
-		}
-	}
-	if (PlayerHitBox)
-	{
-		PlayerHitBox->OnComponentBeginOverlap.AddDynamic(this, &ATP_ThirdPersonCharacter::OnHitBoxOverlapBegin);
-		PlayerHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); 
-	}
-
-	if (IsLocallyControlled())
-	{
-		if (APlayerController* PC = Cast<APlayerController>(GetController()))
-		{
-			UStatusView* StatusView = CreateWidget<UStatusView>(PC, StatusViewClass);
-			if (StatusView)
-			{
-				StatusView->AddToViewport();
-
+				StatusViewRef->AddToViewport();
 				FTimerHandle TempHandle;
-				GetWorld()->GetTimerManager().SetTimer(TempHandle, FTimerDelegate::CreateLambda([StatusView]()
+				GetWorld()->GetTimerManager().SetTimer(TempHandle, FTimerDelegate::CreateLambda([this]()
 				{
-					StatusView->RefreshPlayerList(); 
+					if (StatusViewRef)
+						StatusViewRef->RefreshPlayerList();
 				}), 1.0f, false);
 			}
 		}
@@ -162,6 +146,8 @@ void ATP_ThirdPersonCharacter::ApplyDamage(AActor* Damager, float DamageAmount)
 	{
 		Server_ApplyDamage(Damager, DamageAmount);
 	}
+	
+
 	
 }
 
@@ -221,20 +207,6 @@ void ATP_ThirdPersonCharacter::ApplyHitbox()
 	}, 0.1f, false);
 }
 
-void ATP_ThirdPersonCharacter::Server_ApplyDamage_Implementation(AActor* Damager, float DamageAmount)
-{
-	if (AFMG_PlayerState* FighterPS = Cast<AFMG_PlayerState>(GetPlayerState()))
-	{
-		const float NewHP = FMath::Clamp(FighterPS->GetHP() - DamageAmount, 0.0f, 100.0f);
-		FighterPS->SetHP(NewHP);
-
-		if (NewHP <= 0.f)
-		{
-			SetLifeSpan(5.0f);
-		}
-	}
-}
-
 void ATP_ThirdPersonCharacter::Multicast_PlayKnockback_Implementation(FVector KnockDirection, float Force)
 {
 	
@@ -254,32 +226,6 @@ void ATP_ThirdPersonCharacter::Multicast_PlayAttackAnim_Implementation()
 	}
 }
 
-void ATP_ThirdPersonCharacter::OnHitBoxOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-                                                    UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (OtherActor && OtherActor != this && !HitActors.Contains(OtherActor))
-	{
-		HitActors.Add(OtherActor);
-		if (IDamageableInterface* Target = Cast<IDamageableInterface>(OtherActor))
-		{
-			Target->ApplyDamage(this, BaseAttackDamage);
-
-			DisplayHitActorHP();
-			FVector KnockDir = OtherActor->GetActorLocation() - GetActorLocation();
-			KnockDir.Z = 0.f; 
-			KnockDir.Normalize();
-
-			KnockDir.Z = 0.3f; 
-			KnockDir.Normalize();
-
-			float KnockForce = FMath::Clamp(BaseAttackDamage * KnockbackMultiplier * 0.01f, 300.f, 800.f);
-
-
-			Target->ApplyKnockback(KnockDir, KnockForce);
-		}
-	}
-}
-
 void ATP_ThirdPersonCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -289,22 +235,6 @@ void ATP_ThirdPersonCharacter::ResetCombo()
 {
 	ComboCount = 0;
 	bIsCombo = false;
-}
-
-void ATP_ThirdPersonCharacter::DisplayHitActorHP()
-{
-	for (AActor* HitActor : HitActors)
-	{
-		if (ABaseCharacter* Target = Cast<ABaseCharacter>(HitActor))
-		{
-			if (AFMG_PlayerState* PS = Cast<AFMG_PlayerState>(Target->GetPlayerState()))
-			{
-				FString Name = PS->PlayerNickname;
-				float HP = PS->GetHP();
-				UE_LOG(LogTemp, Log, TEXT("[맞은놈] %s - HP: %.1f"), *Name, HP);
-			}
-		}
-	}
 }
 
 void ATP_ThirdPersonCharacter::Move(const FInputActionValue& Value)

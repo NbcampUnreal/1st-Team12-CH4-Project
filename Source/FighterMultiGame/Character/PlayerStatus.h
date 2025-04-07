@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "FMG_PlayerState.h"
 #include "Components/TextBlock.h"
+#include "Character/BaseCharacter.h"
 #include "PlayerStatus.generated.h"
 
 UCLASS()
@@ -15,6 +16,9 @@ class FIGHTERMULTIGAME_API UPlayerStatus : public UUserWidget
 
 	
 public:
+
+	UPROPERTY(meta = (BindWidget))
+	class UImage* PlayerImage;
 	
 	UPROPERTY(meta=(BindWidget))
 	class UTextBlock* HPValueText;
@@ -28,11 +32,12 @@ public:
 	UFUNCTION()
 	void UpdateHP(float NewHP);
 
-	void SetPlayerInfo(class AFMG_PlayerState* InPlayerState);
+	void SetPlayerInfo(class ABaseCharacter* InCharacter);
 
 protected:
 	
 	UPROPERTY()
-	AFMG_PlayerState* BoundPlayerState;
-	
+	ABaseCharacter* Character;
+	UPROPERTY()
+	AFMG_PlayerState* BoundPlayerState ;
 };

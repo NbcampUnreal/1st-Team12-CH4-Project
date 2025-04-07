@@ -13,6 +13,7 @@ void AFMG_PlayerState::OnRep_PlayerIndex()
 //ui넣어주기
 void AFMG_PlayerState::OnRep_CurrentHP()
 {
+	UE_LOG(LogTemp, Warning, TEXT("[OnRep_CurrentHP] 호출: %.1f"), CurrentHP);
 	OnHPChanged.Broadcast(CurrentHP);
 }
 

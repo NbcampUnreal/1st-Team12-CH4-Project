@@ -12,6 +12,7 @@
 
 class AFMG_PlayerState;
 
+
 AKchTestGameMode::AKchTestGameMode()
 {
 	DefaultPawnClass = ATestPlayerCharacter::StaticClass();
@@ -29,6 +30,7 @@ void AKchTestGameMode::PostLogin(APlayerController* NewPlayer)
 		}
 	}
 }
+
 
 AActor* AKchTestGameMode::ChoosePlayerStart_Implementation(AController* Player)
 {

@@ -18,7 +18,6 @@ class FIGHTERMULTIGAME_API UStatusView : public UUserWidget
 public:
 	virtual void NativeConstruct() override;
 
-	//델리게이트 전용함수
 	UFUNCTION()
 	void OnPlayerIndexChangedHandler(AFMG_PlayerState* ChangedState);
 	
@@ -30,17 +29,12 @@ protected:
 	UPROPERTY(meta = (BindWidget))
 	UHorizontalBox* PlayerStatusContainer;
 
-
-	
 	UPROPERTY(meta = (BindWidget))
 	UPlayerStatus* WBP_PlayerStatus_1;
-
 	UPROPERTY(meta = (BindWidget))
 	UPlayerStatus* WBP_PlayerStatus_2;
-
 	UPROPERTY(meta = (BindWidget))
 	UPlayerStatus* WBP_PlayerStatus_3;
-
 	UPROPERTY(meta = (BindWidget))
 	UPlayerStatus* WBP_PlayerStatus_4;
 	
