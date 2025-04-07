@@ -7,11 +7,14 @@
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "FMG_PlayerState.h"
 #include "Net/UnrealNetwork.h"
 #include "Components/BoxComponent.h"
 #include "InputMappingContext.h"
 #include "InputActionValue.h"
+#include "Blueprint/UserWidget.h"
 
+class UStatusView;
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 //////////////////////////////////////////////////////////////////////////
@@ -88,9 +91,26 @@ void ATP_ThirdPersonCharacter::BeginPlay()
 	if (PlayerHitBox)
 	{
 		PlayerHitBox->OnComponentBeginOverlap.AddDynamic(this, &ATP_ThirdPersonCharacter::OnHitBoxOverlapBegin);
-		PlayerHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 기본 비활성화
+		PlayerHitBox->SetCollisionEnabled(ECollisionEnabled::NoCollision); 
 	}
-	
+
+	if (IsLocallyControlled())
+	{
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			UStatusView* StatusView = CreateWidget<UStatusView>(PC, StatusViewClass);
+			if (StatusView)
+			{
+				StatusView->AddToViewport();
+
+				FTimerHandle TempHandle;
+				GetWorld()->GetTimerManager().SetTimer(TempHandle, FTimerDelegate::CreateLambda([StatusView]()
+				{
+					StatusView->RefreshPlayerList(); 
+				}), 1.0f, false);
+			}
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -203,18 +223,16 @@ void ATP_ThirdPersonCharacter::ApplyHitbox()
 
 void ATP_ThirdPersonCharacter::Server_ApplyDamage_Implementation(AActor* Damager, float DamageAmount)
 {
-	CurrentHP -= DamageAmount;
-	CurrentHP = FMath::Clamp(CurrentHP, 0.0f, MaxHP);
-
-	UE_LOG(LogTemp, Log, TEXT("받은 데미지: %.1f | 현재 체력: %.1f"), DamageAmount, CurrentHP);
-
-	if (CurrentHP <= 0.0f)
+	if (AFMG_PlayerState* FighterPS = Cast<AFMG_PlayerState>(GetPlayerState()))
 	{
-		GetMesh()->SetSimulatePhysics(true);
-		//GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		SetLifeSpan(5.0f);
+		const float NewHP = FMath::Clamp(FighterPS->GetHP() - DamageAmount, 0.0f, 100.0f);
+		FighterPS->SetHP(NewHP);
+
+		if (NewHP <= 0.f)
+		{
+			SetLifeSpan(5.0f);
+		}
 	}
-	
 }
 
 void ATP_ThirdPersonCharacter::Multicast_PlayKnockback_Implementation(FVector KnockDirection, float Force)
@@ -246,7 +264,7 @@ void ATP_ThirdPersonCharacter::OnHitBoxOverlapBegin(UPrimitiveComponent* Overlap
 		{
 			Target->ApplyDamage(this, BaseAttackDamage);
 
-			
+			DisplayHitActorHP();
 			FVector KnockDir = OtherActor->GetActorLocation() - GetActorLocation();
 			KnockDir.Z = 0.f; 
 			KnockDir.Normalize();
@@ -273,6 +291,22 @@ void ATP_ThirdPersonCharacter::ResetCombo()
 	bIsCombo = false;
 }
 
+void ATP_ThirdPersonCharacter::DisplayHitActorHP()
+{
+	for (AActor* HitActor : HitActors)
+	{
+		if (ABaseCharacter* Target = Cast<ABaseCharacter>(HitActor))
+		{
+			if (AFMG_PlayerState* PS = Cast<AFMG_PlayerState>(Target->GetPlayerState()))
+			{
+				FString Name = PS->PlayerNickname;
+				float HP = PS->GetHP();
+				UE_LOG(LogTemp, Log, TEXT("[맞은놈] %s - HP: %.1f"), *Name, HP);
+			}
+		}
+	}
+}
+
 void ATP_ThirdPersonCharacter::Move(const FInputActionValue& Value)
 {
 	// input is a Vector2D
@@ -282,10 +316,4 @@ void ATP_ThirdPersonCharacter::Move(const FInputActionValue& Value)
 	{
 		AddMovementInput(FVector::LeftVector, MovementVector.X);
 	}
-}
-
-void ATP_ThirdPersonCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const 
-{ 	
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps); 
-	DOREPLIFETIME(ATP_ThirdPersonCharacter, CurrentHP);
 }
