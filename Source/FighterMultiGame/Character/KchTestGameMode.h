@@ -15,7 +15,8 @@ class FIGHTERMULTIGAME_API AKchTestGameMode : public AGameMode
 	GENERATED_BODY()
 
 	AKchTestGameMode();
-	
+
+	virtual void PostLogin(APlayerController* NewPlayer) override;
 	virtual AActor* ChoosePlayerStart_Implementation(AController* Player) override;
 
 private:

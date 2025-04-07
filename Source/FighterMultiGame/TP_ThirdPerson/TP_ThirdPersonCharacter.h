@@ -6,6 +6,7 @@
 #include "Character/BaseCharacter.h"
 #include "Character/ICombatInterface.h"
 #include "Character/IDamageableInterface.h"
+#include "Character/StatusView.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "TP_ThirdPersonCharacter.generated.h"
@@ -61,12 +62,14 @@ protected:
 public:
 	virtual void ApplyDamage(AActor* Damager, float DamageAmount) override;
 	virtual void ApplyKnockback(FVector Direction, float Force) override;
+
 	UFUNCTION(BlueprintCallable)
 	virtual void ExecuteAttack() override;
 	virtual void AddCombo() override;
 	virtual void ApplyHitbox() override;
 
 protected:
+	
 	UFUNCTION(Server, Reliable)
 	void Server_ApplyDamage(AActor* Damager, float DamageAmount);
 
@@ -90,6 +93,8 @@ protected:
 
 	void ResetCombo();
 
+	void DisplayHitActorHP();
+
 	virtual void PossessedBy(AController* NewController) override;
 
 	void ResetKnockback();
@@ -106,12 +111,15 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	float KnockbackMultiplier = 1000.0f;
-	UPROPERTY(BlueprintReadOnly, Replicated)
-	float CurrentHP = 100.0f;
+	
 	float MaxHP = 100.0f;
 
 	float Speed = 500.0f;
 
+	UPROPERTY(EditAnywhere, Category="UI")
+	TSubclassOf<UStatusView> StatusViewClass;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	TSet<AActor*> HitActors;
 	float MaxKnockbackGauge = 100.f;
 	float CurrKnockbackGauge = 0.f;
