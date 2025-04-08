@@ -3,6 +3,7 @@
 
 #include "Character/BaseCharacter.h"
 
+#include "DebugHelper.h"
 #include "Components/BoxComponent.h"
 #include "Character/StatusView.h"
 #include "GameFramework/HUD.h"
@@ -65,6 +66,7 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Ou
 { 	
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps); 
 	DOREPLIFETIME(ABaseCharacter, bTrackCam);
+	DOREPLIFETIME(ABaseCharacter, CurrentHP);
 }
 
 
@@ -101,27 +103,24 @@ void ABaseCharacter::OnHitBoxOverlapBegin(UPrimitiveComponent* OverlappedCompone
 
 void ABaseCharacter::ApplyDamage(AActor* Damager, float DamageAmount)
 {
-	if (HasAuthority())
+	if (GEngine)
 	{
-		Server_ApplyDamage(Damager, DamageAmount);
+		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Red,
+			FString::Printf(TEXT("베이스몬스터 데미지적용 %.1f | %s"),
+			DamageAmount,
+			*DebugHelper::GetNetModeName(GetWorld())));
 	}
-
-	if (IsLocallyControlled())
-	{
-		if (ATP_ThirdPersonCharacter* PlayerChar = Cast<ATP_ThirdPersonCharacter>(this))
-		{
-			if (PlayerChar->StatusViewRef)
-			{
-				PlayerChar->StatusViewRef->RefreshPlayerList();
-			}
-		}
-	}
+	// if (HasAuthority())
+	// {
+	// 	
+	// }
+	Server_ApplyDamage(Damager, DamageAmount);
+	
 }
 
 void ABaseCharacter::ApplyKnockback(FVector Direction, float Force)
 {
 	bIsKnockback = true;
-
 	LaunchCharacter(Direction * Force, true, true);
 }
 
@@ -144,18 +143,6 @@ void ABaseCharacter::OnRep_CurrentHP()
 void ABaseCharacter::SetHP(float NewHP)
 {
 	CurrentHP = FMath::Clamp(NewHP, 0.f, MaxHP);
-	OnRep_CurrentHP();
-	
-	if (IsLocallyControlled())
-	{
-		if (ATP_ThirdPersonCharacter* PCChar = Cast<ATP_ThirdPersonCharacter>(this))
-		{
-			if (PCChar->StatusViewRef)
-			{
-				PCChar->StatusViewRef->RefreshPlayerList();
-			}
-		}
-	}
 }
 
 

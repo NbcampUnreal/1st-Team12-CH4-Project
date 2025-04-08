@@ -1,6 +1,8 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "TP_ThirdPersonCharacter.h"
+
+#include "DebugHelper.h"
 #include "Engine/LocalPlayer.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -85,16 +87,25 @@ void ATP_ThirdPersonCharacter::BeginPlay()
 			StatusViewRef = CreateWidget<UStatusView>(PC, StatusViewClass);
 			if (StatusViewRef)
 			{
+				
 				StatusViewRef->AddToViewport();
 				FTimerHandle TempHandle;
 				GetWorld()->GetTimerManager().SetTimer(TempHandle, FTimerDelegate::CreateLambda([this]()
 				{
 					if (StatusViewRef)
 						StatusViewRef->RefreshPlayerList();
-				}), 1.0f, false);
+				}), 3.0f, false);
 			}
 		}
 	}
+}
+
+void ATP_ThirdPersonCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	Multicast_UpdateStatusUI();
+
+	
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -136,21 +147,6 @@ void ATP_ThirdPersonCharacter::SetupPlayerInputComponent(UInputComponent* Player
 	}
 }
 
-void ATP_ThirdPersonCharacter::ApplyDamage(AActor* Damager, float DamageAmount)
-{
-	const FString Context = HasAuthority() ? TEXT("서버") : TEXT("클라이언트");
-
-	UE_LOG(LogTemp, Warning, TEXT("[ApplyDamage] 호출 위치: %s | 데미지: %.1f"), *Context, DamageAmount);
-
-	if (HasAuthority())
-	{
-		Server_ApplyDamage(Damager, DamageAmount);
-	}
-	
-
-	
-}
-
 void ATP_ThirdPersonCharacter::ApplyKnockback(FVector Direction, float Force)
 {
 	if (HasAuthority())
@@ -179,6 +175,7 @@ void ATP_ThirdPersonCharacter::ExecuteAttack()
 		return;
 	}
 
+	Multicast_UpdateStatusUI();
 	AddCombo();
 	ApplyHitbox();
 	Multicast_PlayAttackAnim();
@@ -229,6 +226,34 @@ void ATP_ThirdPersonCharacter::Multicast_PlayAttackAnim_Implementation()
 void ATP_ThirdPersonCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+	
+	if (IsLocallyControlled())
+	{
+		if (ATP_ThirdPersonCharacter* Player = Cast<ATP_ThirdPersonCharacter>(this))
+		{
+			if (Player->StatusViewRef)
+			{
+				Player->StatusViewRef->RefreshPlayerList();
+			}
+		}
+	}
+}
+
+void ATP_ThirdPersonCharacter::Multicast_UpdateStatusUI_Implementation()
+{
+	if (StatusViewRef && IsValid(StatusViewRef))
+	{
+		StatusViewRef->UpdateUI();
+	}
+	else
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green,
+				FString::Printf(TEXT("플레이어->스테이터스가  null,위치:%s"),
+				*DebugHelper::GetNetModeName(GetWorld())));
+		}
+	}
 }
 
 void ATP_ThirdPersonCharacter::ResetCombo()

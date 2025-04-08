@@ -25,6 +25,7 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+
 public:	
 	// 전투 관련 인터페이스
 	virtual void ApplyDamage(AActor* Damager, float DamageAmount) override;
@@ -83,9 +84,12 @@ public:
 	float GetHP() const { return CurrentHP; }
 
 	
-	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHPChanged, float, NewHP);
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnHPChanged, float, CurrentHP);
 	UPROPERTY(BlueprintAssignable, Category="Status")
 	FOnHPChanged OnHPChanged;
+
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
+
 	
 	//Ui관련변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="UI")

@@ -20,15 +20,24 @@ public:
 
 	UFUNCTION()
 	void OnPlayerIndexChangedHandler(AFMG_PlayerState* ChangedState);
-	
+
+
 	UFUNCTION(BlueprintCallable)
 	void RefreshPlayerList();
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateUI();
+	
 
 protected:
 	
 	UPROPERTY(meta = (BindWidget))
 	UHorizontalBox* PlayerStatusContainer;
 
+	
+	UPROPERTY()
+	TArray<UPlayerStatus*> PlayerStatusList;
+	
 	UPROPERTY(meta = (BindWidget))
 	UPlayerStatus* WBP_PlayerStatus_1;
 	UPROPERTY(meta = (BindWidget))
@@ -37,5 +46,7 @@ protected:
 	UPlayerStatus* WBP_PlayerStatus_3;
 	UPROPERTY(meta = (BindWidget))
 	UPlayerStatus* WBP_PlayerStatus_4;
-	
+
+private:
+	void InitDelegate();
 };

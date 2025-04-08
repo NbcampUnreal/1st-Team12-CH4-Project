@@ -33,11 +33,15 @@ public:
 	void UpdateHP(float NewHP);
 
 	void SetPlayerInfo(class ABaseCharacter* InCharacter);
+	
+	ABaseCharacter* GetCharacter(){return Character;}
 
-protected:
+private:
 	
 	UPROPERTY()
 	ABaseCharacter* Character;
+
+	
 	UPROPERTY()
 	AFMG_PlayerState* BoundPlayerState ;
 };

@@ -45,6 +45,8 @@ public:
 
 	virtual void BeginPlay() override;
 
+	virtual void Tick(float DeltaTime) override;
+
 protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
@@ -59,7 +61,6 @@ protected:
 
 public:
 
-	virtual void ApplyDamage(AActor* Damager, float DamageAmount) override;
 	virtual void ApplyKnockback(FVector Direction, float Force) override;
 
 	
@@ -80,6 +81,8 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PlayAttackAnim();
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_UpdateStatusUI();
 
 	void ResetCombo();
 

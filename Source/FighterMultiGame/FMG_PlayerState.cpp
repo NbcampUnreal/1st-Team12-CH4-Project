@@ -20,8 +20,6 @@ void AFMG_PlayerState::OnRep_CurrentHP()
 void AFMG_PlayerState::SetHP(float NewHP)
 {
 	CurrentHP = FMath::Clamp(NewHP, 0.f, 100.f);
-	OnRep_CurrentHP(); 
-	OnHPChanged.Broadcast(CurrentHP);
 }
 
 void AFMG_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
