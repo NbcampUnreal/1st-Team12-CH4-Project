@@ -43,6 +43,13 @@ public:
 	UPROPERTY(EditAnywhere,BlueprintReadWrite,Category="Status")
 	FString PlayerNickname;
 
+	// 플레이어가 선택한 캐릭터
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Character Select")
+	int32 SelectedCharacterIndex = -1;
+
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Character Select")
+	bool bSelectConfirmed = false;
+
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
 

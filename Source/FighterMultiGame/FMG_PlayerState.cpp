@@ -27,4 +27,7 @@ void AFMG_PlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AFMG_PlayerState, CurrentHP);
 	DOREPLIFETIME(AFMG_PlayerState, PlayerIndex);
+
+	DOREPLIFETIME(AFMG_PlayerState, SelectedCharacterIndex);
+	DOREPLIFETIME(AFMG_PlayerState, bSelectConfirmed);
 }
