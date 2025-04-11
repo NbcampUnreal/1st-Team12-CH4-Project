@@ -44,11 +44,14 @@ public:
 	FString PlayerNickname;
 
 	// 플레이어가 선택한 캐릭터
-	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Character Select")
+	UPROPERTY(ReplicatedUsing = OnRep_SelectCharacter, BlueprintReadWrite, Category = "Character Select")
 	int32 SelectedCharacterIndex = -1;
 
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Character Select")
 	bool bSelectConfirmed = false;
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnRep_SelectCharacter();
 
 protected:
 	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const override;
