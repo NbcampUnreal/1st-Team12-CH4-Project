@@ -175,6 +175,11 @@ void ATP_ThirdPersonCharacter::ExecuteAttack()
 		return;
 	}
 
+	if (HasAuthority())
+	{
+		Multicast_PlayHitSound(GetActorLocation());
+	}
+			
 	Multicast_UpdateStatusUI();
 	AddCombo();
 	ApplyHitbox();
@@ -245,15 +250,7 @@ void ATP_ThirdPersonCharacter::Multicast_UpdateStatusUI_Implementation()
 	{
 		StatusViewRef->UpdateUI();
 	}
-	else
-	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Green,
-				FString::Printf(TEXT("플레이어->스테이터스가  null,위치:%s"),
-				*DebugHelper::GetNetModeName(GetWorld())));
-		}
-	}
+	
 }
 
 void ATP_ThirdPersonCharacter::ResetCombo()

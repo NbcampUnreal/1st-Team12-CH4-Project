@@ -4,9 +4,11 @@
 #include "Character/BaseCharacter.h"
 
 #include "DebugHelper.h"
+#include "KchTestGameMode.h"
 #include "Components/BoxComponent.h"
 #include "Character/StatusView.h"
 #include "GameFramework/HUD.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 #include "TP_ThirdPerson/TP_ThirdPersonCharacter.h"
 
@@ -69,6 +71,28 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Ou
 	DOREPLIFETIME(ABaseCharacter, CurrentHP);
 }
 
+void ABaseCharacter::Multicast_PlayHitSound_Implementation(FVector Location)
+{
+	if (HitSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(GetWorld(), HitSound, Location);
+	}
+}
+
+void ABaseCharacter::Multicast_PlayHitEffect_Implementation(FVector Location)
+{
+	if (HitEffect)
+	{
+		UGameplayStatics::SpawnEmitterAtLocation(
+			GetWorld(),
+			HitEffect,
+			Location,
+			FRotator::ZeroRotator,
+			FVector(2.0f)	
+		);
+	}
+}
+
 
 void ABaseCharacter::DisplayHitActorHP()
 {
@@ -84,11 +108,20 @@ void ABaseCharacter::DisplayHitActorHP()
 void ABaseCharacter::OnHitBoxOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                           UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (!OtherActor || OtherActor == this) return;
+	if (HitActors.Contains(OtherActor)) return;
+	if (OtherActor->GetInstigatorController() == GetController()) return;
+	
 	if (OtherActor && OtherActor != this && !HitActors.Contains(OtherActor))
 	{
 		HitActors.Add(OtherActor);
 		if (IDamageableInterface* Target = Cast<IDamageableInterface>(OtherActor))
 		{
+			if (HasAuthority())
+			{
+				Multicast_PlayHitEffect(OtherActor->GetActorLocation());
+			}
+			
 			Target->ApplyDamage(this, BaseAttackDamage);
 			DisplayHitActorHP();
 			FVector KnockDir = OtherActor->GetActorLocation() - GetActorLocation();
@@ -131,7 +164,19 @@ void ABaseCharacter::Server_ApplyDamage_Implementation(AActor* Damager, float Da
 	if (CurrentHP <= 0.0f)
 	{
 		GetMesh()->SetSimulatePhysics(true);
+		bIsDead = true;
 		SetLifeSpan(5.0f);
+		
+		if (HasAuthority())
+		{
+			if (AGameModeBase* GM = UGameplayStatics::GetGameMode(GetWorld()))
+			{
+				if (AKchTestGameMode* TestGM = Cast<AKchTestGameMode>(GM))
+				{
+					TestGM->CheckTeamAllDead();
+				}
+			}
+		}
 	}
 }
 

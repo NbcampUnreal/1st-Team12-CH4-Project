@@ -52,3 +52,38 @@ AActor* AKchTestGameMode::ChoosePlayerStart_Implementation(AController* Player)
 
 	return Super::ChoosePlayerStart_Implementation(Player);
 }
+
+void AKchTestGameMode::CheckTeamAllDead()
+{
+	int32 AliveA = 0;
+	int32 AliveB = 0;
+
+	for (TActorIterator<ABaseCharacter> It(GetWorld()); It; ++It)
+	{
+		ABaseCharacter* Fighter = *It;
+		if (!Fighter || Fighter->bIsDead == true) continue;
+
+		if (AFMG_PlayerState* PS = Cast<AFMG_PlayerState>(Fighter->GetPlayerState()))
+		{
+			if (IsTeamA(PS->PlayerIndex))
+			{
+				AliveA++;
+			}
+			else if (IsTeamB(PS->PlayerIndex))
+			{
+				AliveB++;
+			}
+		}
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("A팀 생존: %d / B팀 생존: %d"), AliveA, AliveB);
+
+	if (AliveA == 0)
+	{
+		OnTeamDefeated(TEXT("A팀"));
+	}
+	else if (AliveB == 0)
+	{
+		OnTeamDefeated(TEXT("B팀"));
+	}
+}

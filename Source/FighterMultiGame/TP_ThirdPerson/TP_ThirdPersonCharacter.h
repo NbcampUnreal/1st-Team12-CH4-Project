@@ -95,6 +95,8 @@ protected:
 	UPROPERTY(EditAnywhere, Category="UI")
 	TSubclassOf<UStatusView> StatusViewClass;
 
+	
+
 public:
 	
 	UPROPERTY()

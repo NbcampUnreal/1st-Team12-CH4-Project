@@ -19,13 +19,7 @@ void UPlayerStatus::UpdateHP(float NewHP)
 
 void UPlayerStatus::SetPlayerInfo(class  ABaseCharacter* InCharacter)
 {
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.5f, FColor::Red,
-			FString::Printf(TEXT("캐릭터이름: %s ,호출위치: %s"),
-			*InCharacter->CharacterName,
-			*DebugHelper::GetNetModeName(GetWorld())));
-	}
+	
 
 	if (!IsValid(InCharacter))
 	{

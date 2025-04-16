@@ -99,6 +99,18 @@ public:
 	FString CharacterName;
 	FString GetCharacterName() const { return CharacterName; }
 
+	//이펙트 및 사운드
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Effects")
+	UParticleSystem* HitEffect;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Effects")
+	USoundBase* HitSound;
+
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlayHitEffect(FVector Location);
+	UFUNCTION(NetMulticast, Unreliable)
+	void Multicast_PlayHitSound(FVector Location);
+	
 
 //전투관련변수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
@@ -120,7 +132,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	float KnockbackMultiplier = 1000.0f;
 	
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Combat")
+	bool bIsDead = false;
+	
 	float Speed = 500.0f;
 
 };
