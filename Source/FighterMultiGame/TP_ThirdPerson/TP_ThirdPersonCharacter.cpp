@@ -169,11 +169,11 @@ void ATP_ThirdPersonCharacter::ExecuteAttack()
 {
 	if (bIsKnockback) return; // 넉백 중에는 공격 금지
 	
-	// if (!HasAuthority())
-	// {
-	// 	Server_RequestAttack();
-	// 	return;
-	// }
+	if (!HasAuthority())
+	{
+		Server_RequestAttack();
+		return;
+	}
 
 	if (HasAuthority())
 	{
