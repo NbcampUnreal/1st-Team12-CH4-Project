@@ -34,7 +34,7 @@ ATP_ThirdPersonCharacter::ATP_ThirdPersonCharacter()
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
 
-	GetCharacterMovement()->JumpZVelocity = 600.f;
+	GetCharacterMovement()->JumpZVelocity = 1000.f;
 	GetCharacterMovement()->AirControl = 0.35f;
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
@@ -169,11 +169,11 @@ void ATP_ThirdPersonCharacter::ExecuteAttack()
 {
 	if (bIsKnockback) return; // 넉백 중에는 공격 금지
 	
-	if (!HasAuthority())
-	{
-		Server_RequestAttack();
-		return;
-	}
+	// if (!HasAuthority())
+	// {
+	// 	Server_RequestAttack();
+	// 	return;
+	// }
 
 	if (HasAuthority())
 	{

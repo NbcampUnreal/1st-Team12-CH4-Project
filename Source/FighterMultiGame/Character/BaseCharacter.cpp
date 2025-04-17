@@ -7,6 +7,8 @@
 #include "KchTestGameMode.h"
 #include "Components/BoxComponent.h"
 #include "Character/StatusView.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/HUD.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
@@ -71,6 +73,14 @@ void ABaseCharacter::GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & Ou
 	DOREPLIFETIME(ABaseCharacter, CurrentHP);
 }
 
+void ABaseCharacter::Multicast_PlayDeathMontage_Implementation()
+{
+	if (DeathMontage)
+	{
+		PlayAnimMontage(DeathMontage);
+	}
+}
+
 void ABaseCharacter::Multicast_PlayHitSound_Implementation(FVector Location)
 {
 	if (HitSound)
@@ -106,31 +116,41 @@ void ABaseCharacter::DisplayHitActorHP()
 }
 
 void ABaseCharacter::OnHitBoxOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-                                          UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+										  UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (!OtherActor || OtherActor == this) return;
-	if (HitActors.Contains(OtherActor)) return;
-	if (OtherActor->GetInstigatorController() == GetController()) return;
-	
-	if (OtherActor && OtherActor != this && !HitActors.Contains(OtherActor))
+	if (!OtherActor || OtherActor == this || HitActors.Contains(OtherActor))
 	{
-		HitActors.Add(OtherActor);
-		if (IDamageableInterface* Target = Cast<IDamageableInterface>(OtherActor))
-		{
-			if (HasAuthority())
-			{
-				Multicast_PlayHitEffect(OtherActor->GetActorLocation());
-			}
-			
-			Target->ApplyDamage(this, BaseAttackDamage);
-			DisplayHitActorHP();
-			FVector KnockDir = OtherActor->GetActorLocation() - GetActorLocation();
-			KnockDir.Z = 0.3f; 
-			KnockDir.Normalize();
-			float KnockForce = FMath::Clamp(BaseAttackDamage * KnockbackMultiplier * 0.01f, 300.f, 800.f);
+		return;
+	}
 
-			Target->ApplyKnockback(KnockDir, KnockForce);
+	if (Cast<ABaseCharacter>(OtherActor) == this)
+	{
+		return;
+	}
+
+	if (OtherActor->GetInstigatorController() == GetController())
+	{
+		return;
+	}
+
+	HitActors.Add(OtherActor);
+
+	if (IDamageableInterface* Target = Cast<IDamageableInterface>(OtherActor))
+	{
+		if (HasAuthority())
+		{
+			Multicast_PlayHitEffect(OtherActor->GetActorLocation());
 		}
+
+		Target->ApplyDamage(this, BaseAttackDamage);
+		DisplayHitActorHP();
+
+		FVector KnockDir = OtherActor->GetActorLocation() - GetActorLocation();
+		KnockDir.Z = 0.3f;
+		KnockDir.Normalize();
+
+		float KnockForce = FMath::Clamp(BaseAttackDamage * KnockbackMultiplier * 0.01f, 300.f, 800.f);
+		Target->ApplyKnockback(KnockDir, KnockForce);
 	}
 }
 
@@ -143,10 +163,6 @@ void ABaseCharacter::ApplyDamage(AActor* Damager, float DamageAmount)
 			DamageAmount,
 			*DebugHelper::GetNetModeName(GetWorld())));
 	}
-	// if (HasAuthority())
-	// {
-	// 	
-	// }
 	Server_ApplyDamage(Damager, DamageAmount);
 	
 }
@@ -163,9 +179,14 @@ void ABaseCharacter::Server_ApplyDamage_Implementation(AActor* Damager, float Da
 
 	if (CurrentHP <= 0.0f)
 	{
-		GetMesh()->SetSimulatePhysics(true);
+		
 		bIsDead = true;
-		SetLifeSpan(5.0f);
+		Multicast_PlayDeathMontage();
+		GetCharacterMovement()->DisableMovement();
+		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		GetMesh()->SetSimulatePhysics(false);
+		SetLifeSpan(1.0f);
 		
 		if (HasAuthority())
 		{
@@ -211,6 +232,8 @@ void ABaseCharacter::ApplyHitbox()
 
 	HitActors.Empty();
 	PlayerHitBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	PlayerHitBox->IgnoreActorWhenMoving(this, true);
+	PlayerHitBox->MoveIgnoreActors.Add(this);
 
 	FTimerHandle DisableHandle;
 	GetWorldTimerManager().SetTimer(DisableHandle, [this]()

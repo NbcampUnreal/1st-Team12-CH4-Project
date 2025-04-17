@@ -110,6 +110,10 @@ public:
 	void Multicast_PlayHitEffect(FVector Location);
 	UFUNCTION(NetMulticast, Unreliable)
 	void Multicast_PlayHitSound(FVector Location);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayDeathMontage();
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="AnimMontage")
+	UAnimMontage* DeathMontage;
 	
 
 //전투관련변수
