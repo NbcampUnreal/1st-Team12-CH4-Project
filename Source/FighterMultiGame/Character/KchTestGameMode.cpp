@@ -80,10 +80,10 @@ void AKchTestGameMode::CheckTeamAllDead()
 
 	if (AliveA == 0)
 	{
-		OnTeamDefeated(TEXT("A팀"));
+		OnTeamDefeated(TEXT("ATeam"));
 	}
 	else if (AliveB == 0)
 	{
-		OnTeamDefeated(TEXT("B팀"));
+		OnTeamDefeated(TEXT("BTeam"));
 	}
 }
