@@ -41,3 +41,7 @@
 강창훈 - Character
 
 신설빈 - Character
+
+
+감사합니다.
+![DALL·E 2025-04-17 19 51 02 - A cartoon-style video game character resembling a red-capped plumber (similar to Mario), standing in a peaceful outdoor setting with a warm smile  He ](https://github.com/user-attachments/assets/780a9fe2-0f93-46bf-b500-624e7260a77f)
